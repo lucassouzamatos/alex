@@ -7,12 +7,30 @@ defmodule Alex do
     try do
       lexicons
         |> noun_phrase
-        |> check
         |> verb_phrase
         |> trace_result
     rescue
-      _ in ValidationError -> false
-      e -> e
+      value ->
+        IO.puts("Caught #{inspect(value)}")
+        false
+    end
+  end
+
+  def first_of_all([fun]) do
+    fun.()
+  end
+
+  def first_of_all([fun | next]) do
+    first_of_all(fun, next)
+  end
+
+  def first_of_all(fun, next) do
+    try do
+      fun.()
+    rescue
+      e ->
+        IO.puts("Caught #{inspect(e)}")
+        first_of_all(next)
     end
   end
 
@@ -26,20 +44,19 @@ defmodule Alex do
   def noun_phrase(lexicons) do
     lexicons
       |> det
-      |> check
       |> noun
   end
 
   def verb_phrase(lexicons) do
-    lexicons
-      |> intransitive_verb
-
-    or
-
-    lexicons
-      |> transitive_verb
-      |> check
-      |> noun_phrase
+    first_of_all([
+      fn () -> lexicons
+        |> transitive_verb
+        |> noun_phrase
+      end,
+      fn () ->
+        lexicons |> intransitive_verb
+      end
+    ])
   end
 
   def det([value | rest]), do: lex_lookup(value, :det, rest)
@@ -57,5 +74,5 @@ defmodule Alex do
   def lex_lookup(value, :transitive_verb, rest) when value === "drives", do: rest
   def lex_lookup(value, :transitive_verb, rest) when value === "to", do: rest
 
-  def lex_lookup(_value, _, _rest), do: false
+  def lex_lookup(_value, _, rest), do: rest
 end
