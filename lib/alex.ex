@@ -38,9 +38,6 @@ defmodule Alex do
   def trace_result([_], tree), do: {false, tree}
   def trace_result([], tree), do: {true, tree}
 
-  def check(false), do: raise(ValidationError)
-  def check(result), do: result
-
   def noun_phrase(lexicons) do
     {step1, tree_item_1} = det(lexicons)
     {step2, tree_item_2} = noun(step1)
