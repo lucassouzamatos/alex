@@ -1,4 +1,6 @@
 defmodule Alex do
+  alias Alex.Tagger
+
   def sentence(lexicons) do
     try do
       {step1, tree_item_1} = noun_phrase(lexicons)
@@ -35,32 +37,32 @@ defmodule Alex do
   def trace_result([], tree), do: {true, tree}
 
   def noun_phrase(lexicons) do
-    {step1, tree_item_1} = det(lexicons)
-    {step2, tree_item_2} = noun(step1)
+    first_of_all([
+      fn ->
+        {step1, tree_item_1} = Tagger.det(lexicons)
+        {step2, tree_item_2} = Tagger.noun(step1)
 
-    {step2, {:noun_phrase, {tree_item_1, tree_item_2}}}
+        {step2, {:noun_phrase, {tree_item_1, tree_item_2}}}
+      end,
+      fn ->
+        {step2, tree_item_2} = Tagger.noun(lexicons)
+        {step2, {:noun_phrase, {tree_item_2}}}
+      end
+    ])
   end
 
   def verb_phrase(lexicons) do
     first_of_all([
       fn ->
-        {step1, tree_item_1} = transitive_verb(lexicons)
+        {step1, tree_item_1} = Tagger.transitive_verb(lexicons)
         {step2, tree_item_2} = noun_phrase(step1)
 
         {step2, {:verb_phrase, {tree_item_1, tree_item_2}}}
       end,
       fn ->
-        {step1, tree_item_1} = intransitive_verb(lexicons)
+        {step1, tree_item_1} = Tagger.intransitive_verb(lexicons)
         {step1, {:verb_phrase, tree_item_1}}
       end
     ])
   end
-
-  def det([value | rest]), do: {rest, {:det, value}}
-
-  def noun([value | rest]), do: {rest, {:noun, value}}
-
-  def intransitive_verb([value | rest]), do: {rest, {:intransitive_verb, value}}
-
-  def transitive_verb([value | rest]), do: {rest, {:transitive_verb, value}}
 end
