@@ -1,7 +1,3 @@
-defmodule ValidationError do
-  defexception message: "Sentence is invalid"
-end
-
 defmodule Alex do
   def sentence(lexicons) do
     try do
