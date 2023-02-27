@@ -5,10 +5,10 @@ end
 defmodule Alex do
   def sentence(lexicons) do
     try do
-      lexicons
-        |> noun_phrase
-        |> verb_phrase
-        |> trace_result
+      {step1, tree_item_1} = noun_phrase(lexicons)
+      {step2, tree_item_2} = verb_phrase(step1)
+
+      trace_result(step2, {tree_item_1, tree_item_2})
     rescue
       value ->
         IO.puts("Caught #{inspect(value)}")
@@ -34,45 +34,40 @@ defmodule Alex do
     end
   end
 
-  def trace_result(false), do: false
-  def trace_result([_]), do: false
-  def trace_result([]), do: true
+  def trace_result(false, tree), do: {false, tree}
+  def trace_result([_], tree), do: {false, tree}
+  def trace_result([], tree), do: {true, tree}
 
-  def check(false), do: raise ValidationError
+  def check(false), do: raise(ValidationError)
   def check(result), do: result
 
   def noun_phrase(lexicons) do
-    lexicons
-      |> det
-      |> noun
+    {step1, tree_item_1} = det(lexicons)
+    {step2, tree_item_2} = noun(step1)
+
+    {step2, {:noun_phrase, {tree_item_1, tree_item_2}}}
   end
 
   def verb_phrase(lexicons) do
     first_of_all([
-      fn () -> lexicons
-        |> transitive_verb
-        |> noun_phrase
+      fn ->
+        {step1, tree_item_1} = transitive_verb(lexicons)
+        {step2, tree_item_2} = noun_phrase(step1)
+
+        {step2, {:verb_phrase, {tree_item_1, tree_item_2}}}
       end,
-      fn () ->
-        lexicons |> intransitive_verb
+      fn ->
+        {step1, tree_item_1} = intransitive_verb(lexicons)
+        {step1, {:verb_phrase, tree_item_1}}
       end
     ])
   end
 
-  def det([value | rest]), do: lex_lookup(value, :det, rest)
+  def det([value | rest]), do: {rest, {:det, value}}
 
-  def noun([value | rest]), do: lex_lookup(value, :noun, rest)
+  def noun([value | rest]), do: {rest, {:noun, value}}
 
-  def intransitive_verb([value | rest]), do: lex_lookup(value, :intransitive_verb, rest)
+  def intransitive_verb([value | rest]), do: {rest, {:intransitive_verb, value}}
 
-  def transitive_verb([value | rest]), do: lex_lookup(value, :transitive_verb, rest)
-
-  def lex_lookup(value, :det, rest) when value === "the", do: rest
-  def lex_lookup(value, :det, rest) when value === "a", do: rest
-  def lex_lookup(value, :noun, rest) when value === "John", do: rest
-  def lex_lookup(value, :noun, rest) when value === "car", do: rest
-  def lex_lookup(value, :transitive_verb, rest) when value === "drives", do: rest
-  def lex_lookup(value, :transitive_verb, rest) when value === "to", do: rest
-
-  def lex_lookup(_value, _, rest), do: rest
+  def transitive_verb([value | rest]), do: {rest, {:transitive_verb, value}}
 end
