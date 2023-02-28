@@ -3,10 +3,12 @@ defmodule Alex do
 
   def sentence(lexicons) do
     try do
-      {step1, tree_item_1} = noun_phrase(lexicons)
-      {step2, tree_item_2} = verb_phrase(step1)
+      {step1, np} = noun_phrase(lexicons)
+      {step2, vp} = verb_phrase(step1)
 
-      trace_result(step2, {:sentence, {tree_item_1, tree_item_2}})
+      tree = {:sentence, {np, vp}}
+
+      trace_result(step2, tree)
     rescue
       value ->
         IO.puts("Caught #{inspect(value)}")
@@ -39,14 +41,14 @@ defmodule Alex do
   def noun_phrase(lexicons) do
     first_of_all([
       fn ->
-        {step1, tree_item_1} = det(lexicons)
-        {step2, tree_item_2} = noun(step1)
+        {step1, det} = det(lexicons)
+        {step2, noun} = noun(step1)
 
-        {step2, Tagger.noun_phrase({tree_item_1, tree_item_2})}
+        {step2, Tagger.noun_phrase({det, noun})}
       end,
       fn ->
-        {step2, tree_item_2} = noun(lexicons)
-        {step2, Tagger.noun_phrase({tree_item_2})}
+        {step2, n} = noun(lexicons)
+        {step2, Tagger.noun_phrase({n})}
       end
     ])
   end
@@ -54,14 +56,14 @@ defmodule Alex do
   def verb_phrase(lexicons) do
     first_of_all([
       fn ->
-        {step1, tree_item_1} = transitive_verb(lexicons)
-        {step2, tree_item_2} = noun_phrase(step1)
+        {step1, tv} = transitive_verb(lexicons)
+        {step2, np} = noun_phrase(step1)
 
-        {step2, Tagger.verb_phrase({tree_item_1, tree_item_2})}
+        {step2, Tagger.verb_phrase({tv, np})}
       end,
       fn ->
-        {step1, tree_item_1} = intransitive_verb(lexicons)
-        {step1, Tagger.verb_phrase({tree_item_1})}
+        {step1, iv} = intransitive_verb(lexicons)
+        {step1, Tagger.verb_phrase(iv)}
       end
     ])
   end
