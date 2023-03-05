@@ -1,4 +1,6 @@
 defmodule Alex.Dcg.En do
+  @behaviour Alex.Dcg.Grammar
+
   alias Alex.Tagger
   alias Alex.Utils
 
