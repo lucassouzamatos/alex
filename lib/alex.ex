@@ -1,5 +1,6 @@
 defmodule Alex do
   alias Alex.Tagger
+  alias Alex.Utils
 
   def sentence(lexicons) do
     try do
@@ -16,30 +17,12 @@ defmodule Alex do
     end
   end
 
-  def first_of_all([fun]) do
-    fun.()
-  end
-
-  def first_of_all([fun | next]) do
-    first_of_all(fun, next)
-  end
-
-  def first_of_all(fun, next) do
-    try do
-      fun.()
-    rescue
-      e ->
-        IO.puts("Caught #{inspect(e)}")
-        first_of_all(next)
-    end
-  end
-
   def trace_result(false, tree), do: {false, tree}
   def trace_result([_], tree), do: {false, tree}
   def trace_result([], tree), do: {true, tree}
 
   def noun_phrase(lexicons) do
-    first_of_all([
+    Utils.first_of_all([
       fn ->
         {step1, det} = det(lexicons)
         {step2, noun} = noun(step1)
@@ -54,7 +37,7 @@ defmodule Alex do
   end
 
   def verb_phrase(lexicons) do
-    first_of_all([
+    Utils.first_of_all([
       fn ->
         {step1, tv} = transitive_verb(lexicons)
         {step2, np} = noun_phrase(step1)
